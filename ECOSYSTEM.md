@@ -21,7 +21,7 @@ here.
 | Repo | Owned concern | Cluster | Maturity |
 |---|---|---|---|
 | **agentic-ops** | AI-failure-mode review engine + onboarding + drift detection; family doctrine origin | A (review) | Shipping |
-| **pr-review-journal** | The verdict ledger + discipline for the reviewer↔responder interaction | A (review) | Shipping |
+| **pr-review-journal** | Verdict ledger **+ reviewer-quality flywheel** (sycophancy/pushback detection + reviewer-design improvement) | A (review) | Shipping (ledger) |
 | **agentic-review-loop** | Collapsing AI fix-fix-fix iteration chains to 1–2 rounds | A (review) | Bootstrap |
 | **agentic-mail** | Async file-mediated agent↔agent / agent↔human messaging protocol | B (coordination) | Bootstrap |
 | **agentic-handbook** | Portable, agent-consumable situational *practice* guidance | B (coordination) | Scoping |
@@ -52,6 +52,11 @@ depends on neither. Nothing general depends on anything specific.
                                             erebus). ARL is just one more consumer.
 ```
 
+> **Longitudinal view:** beyond the per-PR flow above, the accumulated
+> verdict trail *is* the **reviewer-quality flywheel** (see the
+> `pr-review-journal` entry below) — it improves the responder (sycophancy
+> vs. warranted pushback) and the reviewers (design lessons) over time.
+
 ### `agentic-ops` — the hub + doctrine source
 
 - **Owns:** the centralized devops platform for AI-led development —
@@ -71,20 +76,34 @@ depends on neither. Nothing general depends on anything specific.
   no-auto-merge kernel rule is *scoped-inverted* by `agentic-review-loop`'s
   ADR-001.
 
-### `pr-review-journal` — the verdict ledger (independent shared infra)
+### `pr-review-journal` — the reviewer-quality ledger + flywheel (independent shared infra)
 
-- **Owns:** the ledger and discipline of the reviewer↔responder interaction —
-  the parseable **verdict schema** ("recommendation → accepted/rejected/
-  deferred + why") and the two skills (`pr-reviewer`, `pr-review-triage`)
-  that encode issue-side and dispose-side discipline. Vendor-agnostic by
-  design ("reviewer behaviour as config, not code").
+- **Owns:** the measurement substrate and discipline of the reviewer↔responder
+  interaction. Concretely: the parseable **verdict schema** ("recommendation →
+  accepted/rejected/deferred + why"), the two discipline skills (`pr-reviewer`
+  issue-side, `pr-review-triage` dispose-side), and — the larger purpose — the
+  **reviewer-quality flywheel** that runs on the accumulated verdict trail:
+    - *Responder-quality loop:* detect sycophancy (rubber-stamping reviewer
+      findings to close threads) vs. warranted pushback in the responding agent.
+    - *Reviewer-design loop:* use verdict history to improve reviewer-agent
+      design — suppress consistently-rejected noise classes, close gap classes
+      that let real defects through — so reviews raise PR/codebase quality.
+  Vendor-agnostic by design ("reviewer behaviour as config, not code").
 - **Does NOT own:** producing findings (→ any reviewer, incl. `agentic-ops`),
-  or deciding what to *do* with a PR — loop timing, escalation, merge
-  (→ `agentic-review-loop`).
-- **Maturity:** Shipping. `v0.1.0`, installable Claude Code plugin, 35-test
-  suite. Born **outside** this family (extracted from `tap-n-filter`); also
-  used in `erebus`.
-- **Composition role:** the independent ledger every responder writes to.
+  deciding what to *do* with a PR — loop timing, escalation, merge
+  (→ `agentic-review-loop`), or any reviewer *implementation*. The fence is
+  **measure-vs-implement**: this repo owns the quality *measurement + design
+  discipline*; reviewer implementations (`agentic-ops/review.yml`, CR / Codex
+  configs, the `pr-reviewer` reference design) *consume* the lessons.
+- **Maturity:** Shipping as a **ledger** (`v0.1.0`, installable plugin, 35-test
+  suite). The **flywheel is latent, not built**: the data model reserves
+  extension hooks ("metrics consumer", "learning system") but no aggregation or
+  sycophancy-detection layer exists yet, and sycophancy detection further needs
+  an outcome-linkage signal the schema does not carry (see
+  [OQ-004](OPEN_QUESTIONS.md)). Born **outside** this family (extracted from
+  `tap-n-filter`); also used in `erebus`.
+- **Composition role:** the independent ledger every responder writes to, and
+  the measurement substrate that improves every reviewer over time.
 - **Key relationships:** works with `agentic-ops/review.yml` as one finding
   source; [ADR-001](docs/adr/ADR-001-review-journal-stays-independent.md)
   records that it **stays independent** and that `agentic-review-loop`

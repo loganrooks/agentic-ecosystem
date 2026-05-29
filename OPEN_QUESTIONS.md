@@ -75,6 +75,44 @@ documented checklist here) so the conventions have one source.
 current count the duplication is tolerable; if the family keeps growing, the
 DRY case strengthens. No action until a 7th repo is genuinely warranted.
 
+## OQ-004 — Where does the reviewer-quality flywheel live, and what does sycophancy detection require?
+
+**Status:** open. Surfaced 2026-05-29.
+
+[ADR-001](docs/adr/ADR-001-review-journal-stays-independent.md) and the
+expanded `pr-review-journal` entry in [`ECOSYSTEM.md`](ECOSYSTEM.md) establish
+that the journal's purpose is not just a per-PR verdict ledger but a
+**reviewer-quality flywheel**: the accumulated verdict trail is the dataset for
+(1) detecting sycophancy vs. warranted pushback in the responding agent, and
+(2) improving reviewer-agent design (suppress noise classes, close gap classes).
+Two things are unresolved.
+
+**(1) Engine location.** Does the aggregation + learning layer — the flywheel
+*engine* — live **inside** `pr-review-journal`, or as a **separate consumer**
+that attaches to its verdict records? The journal owns both discipline skills
+and the data, which pulls *inside*; but its own Unix-philosophy framing
+("anything that makes the protocol smarter is suspect") and its data model —
+which reserves extension hooks for an external "metrics consumer" and "learning
+system" rather than building them in — pull toward *separate*. If separate,
+that consumer may itself warrant a named concern (and, by the
+two-project-signal rule in [`AGENTS.md`](AGENTS.md), eventually a repo).
+
+**(2) Sycophancy needs an outcome signal the schema lacks.** Accept-rate cannot
+distinguish "agreed because correct" from "agreed to be agreeable." The flywheel
+needs **outcome-linkage** per verdict: was an *accepted* finding later reverted
+or did it regress? was a *rejected* finding later vindicated or re-opened? The
+current verdict schema carries no such field. What is the minimal mechanism
+(post-merge revert/bug tracking; periodic ground-truth audit of a sample), and
+does it belong in the schema or the engine? This is the ground-truth-anchoring
+discipline (from the AgenticOps failure-mode research) applied to the responder.
+
+**What would change the answer:** a first real batch of accumulated verdicts
+(does longitudinal analysis need a separate service, or is a query over the
+existing journal enough?); whether `agentic-ops` or another reviewer
+implementation needs flywheel output in-band vs. as periodic reports. Decide the
+outcome-linkage field *before* building analytics — it is cheap to add to the
+schema now and expensive to backfill later.
+
 ## How this file evolves
 
 - Add `OQ-NNN` when a mapping pass or a PR surfaces a genuine *cross-repo*
