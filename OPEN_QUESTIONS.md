@@ -1,0 +1,85 @@
+# Open questions (cross-repo)
+
+Unresolved boundary decisions that span two or more `agentic-*` repos. ADRs
+in [`docs/adr/`](docs/adr/) record cross-repo decisions *made*; this file
+records the ones still *pending*.
+
+Entries get an `OQ-NNN` ID for citation. A question belongs here only if it
+governs a seam *between* repos; questions internal to one repo live in that
+repo's own `OPEN_QUESTIONS.md`.
+
+## OQ-001 — Is `agentic-review-loop` a product, or `agentic-ops`'s module?
+
+**Status:** open. Surfaced 2026-05-29 during the ecosystem mapping pass.
+
+[ADR-001](docs/adr/ADR-001-review-journal-stays-independent.md) settled that
+ARL *consumes* `pr-review-journal`. It did not settle ARL's own status. ARL
+is a scoped inversion of `agentic-ops`'s no-auto-merge kernel rule and
+targets `agentic-ops` as an install consumer — which raises the question of
+whether ARL is a standalone product or is really `agentic-ops`'s
+"convergence loop" module that happens to live in its own repo.
+
+Arguments for **standalone**: it has a distinct, well-researched problem
+(iteration-chain collapse), its own roadmap to v1.0, its own install path,
+and a deliberately *different* merge policy than `agentic-ops` (autonomous vs.
+human-gated) — co-locating them would force one merge discipline on both.
+
+Arguments for **module of `agentic-ops`**: both operate on the same PR-review
+surface; `agentic-ops` already owns "review"; a solo maintainer carries two
+roadmaps, two CI setups, two release cadences for what may be one product's
+two layers.
+
+**What would change the answer:** whether ARL acquires a consumer *other*
+than `agentic-ops` (→ standalone); whether its autonomous-merge policy proves
+to need a genuinely separate governance surface from `agentic-ops`'s (→
+standalone); or whether, after P4 ships, its runtime turns out to be
+inseparable from `agentic-ops`'s review invocation (→ module). Defer until
+ARL reaches P4 (first real supervisor-loop deployment) — the empirical usage
+pattern decides it.
+
+## OQ-002 — Should `agentic-handbook` and `agentic-trellis` consolidate?
+
+**Status:** open. Surfaced 2026-05-29 during the ecosystem mapping pass.
+
+The two emerged together, from the same `agentic-mail` supervisor sessions.
+Both are pre-code (Scoping / Seed). Their concerns are adjacent: the handbook
+is situational practice guidance delivered *to* an agent; trellis is
+consultant guidance *for running* planner/executor agent workflows. Under the
+couple-vs-compose test in
+[ADR-001](docs/adr/ADR-001-review-journal-stays-independent.md), they *pass*
+all three coupling conditions relative to each other — neither ships, same
+cadence, same origin — which argues for one repo, not two.
+
+The counter-argument is identity: the handbook explicitly positioned itself
+as "parallel, not a spinoff," and a portable cross-project practice corpus is
+a genuinely different artifact from an operations consultant. Merging risks
+muddying two clean visions before either has shipped a line of code.
+
+**What would change the answer:** whichever ships first and proves its own
+distribution mechanism establishes the boundary; if *neither* moves, the
+default is to consolidate into one "agent-practice" repo rather than maintain
+two empty scaffolds. Decide before *either* writes implementation code — the
+merge is cheap now and expensive once both have structure.
+
+## OQ-003 — Shared scaffolding template across the family?
+
+**Status:** open. Low priority. Surfaced 2026-05-29.
+
+Every family repo independently reproduces the same scaffold (VISION /
+ROADMAP / OPEN_QUESTIONS / `docs/adr/README.md` with the full status-value
+essay / AGENTS.md). That is duplicated discipline that drifts. Candidate: a
+shared template (a `create-agentic-repo` skill, or a template repo, or a
+documented checklist here) so the conventions have one source.
+
+**What would change the answer:** the number of future family repos. At the
+current count the duplication is tolerable; if the family keeps growing, the
+DRY case strengthens. No action until a 7th repo is genuinely warranted.
+
+## How this file evolves
+
+- Add `OQ-NNN` when a mapping pass or a PR surfaces a genuine *cross-repo*
+  tradeoff not decided by an ADR.
+- Resolve by either writing a cross-repo ADR (decision recorded) or folding
+  the question into a repo's roadmap (deferred to a specific phase).
+- Do not delete resolved entries; mark them `Status: resolved by ADR-NNN` or
+  `Status: deferred to <repo>/<phase>`.
