@@ -113,6 +113,68 @@ implementation needs flywheel output in-band vs. as periodic reports. Decide the
 outcome-linkage field *before* building analytics — it is cheap to add to the
 schema now and expensive to backfill later.
 
+## OQ-005 — What is the autonomy boundary for the drive-to-maturity loop, and does running it resolve OQ-001?
+
+**Status:** open. Surfaced 2026-05-29 during the AOR loop-design pass.
+
+For the autonomous loop driving `codebase-mapper`/cbm H2→H5 under a **full-auto,
+minimize-involvement** posture (see [ADR-002](docs/adr/ADR-002-drive-converge-handoff-contract.md)
+and [ADR-003](docs/adr/ADR-003-cross-model-gate-no-skimp-guarantee.md)): **what
+does the loop decide alone vs. MUST escalate, and how is that boundary calibrated
+without either over-asking (flooding the human) or under-asking (silent
+over-suppression)?**
+
+This is cross-repo: the boundary spans cbm (`/goal` raises escalations;
+`vision_ambiguity` stop), ARL (autonomous-merge authority per *its* ADR-001 —
+scope-inverted vs. `agentic-ops`'s human-gated rule; see
+`agentic-review-loop#15`), `agentic-mail`/escalation transport, and the
+maintainer. **It extends [OQ-001](#oq-001--is-agentic-review-loop-a-product-or-agentic-opss-module):**
+ARL's autonomous-merge posture *is* the live experiment that calibrates this, so
+OQ-005 and OQ-001 resolve together.
+
+What the research says, so the options are grounded:
+
+- Selective escalation is a **model-level deficit**: HiL-Bench (arXiv 2604.09408,
+  T3, COI: Scale.AI) — full-info pass@3 75–89% collapses to 4–24% once the agent
+  must *judge* whether to ask. Self-report is unreliable → the boundary must key on
+  **structural, harness-detectable triggers**, with agent self-uncertainty a
+  secondary signal only.
+- "Minimize involvement" is formally an **Ask-F1 precision/recall** tradeoff
+  (question-spam is penalized: 80% recall via 50 questions = 14.5% score) —
+  *escalate rarely but correctly*, not "ask less."
+- Over-automation worsens oversight (the "responsibility vacuum") — the fix is
+  **rare, high-signal, information-rich escalations** (carry the full triage
+  trace), not a human gate everywhere (which re-creates the vacuum via
+  rubber-stamping).
+
+**Options.** (1) *Static deny-list + cost function (design-only), per-horizon
+tightness* — MUST-escalate: vision/spec ambiguity, destructive/irreversible
+(harness-detected), high-risk merge, repeated CI failure, reviewer disagreement,
+stall-past-budget, high-stakes whitelist; gray-zone cost function `escalate if
+(blast_radius × irreversibility) > θ OR confidence < τ OR trigger ∈ deny-list`;
+tighter at H2, widening as cbm acceptance gates prove out. *(Leaning — the only
+option grounded in harness-detectable signals.)* (2) *Learned deferral policy
+(RL)* — rejected for now (no training loop; a learned policy on a pre-1.0 surface
+inverts the stable-dependency direction). (3) *Human-gate every merge* — rejected
+(re-creates the responsibility vacuum via rubber-stamping; defeats the loop's
+purpose).
+
+**The unresolved residual (carry forward, do not pretend solved):**
+over-suppression of escalation is **invisible by construction** — there is no
+internal signal for "I should have asked and didn't." The cross-model checkpoint
+(ADR-003) catches pass-claim errors but **not** "the human had context the loop
+never knew it lacked." The only external anchors are the in-flight
+**outcome-linkage** field (`pr-review-journal#6`'s `extras.outcome`, where
+`CONTRADICTED × REJECTED_*` is the over-suppression alarm — this is exactly the
+falsifier [OQ-004](#oq-004--where-does-the-reviewer-quality-flywheel-live-and-what-does-sycophancy-detection-require)
+reserves), the orthogonal-reviewer ensemble, and human escalation on disagreement.
+
+**What would change the answer:** ARL P4-onward dogfooding on ARL's own PRs, then
+the cbm drive, producing real **Ask-F1** data — resolve OQ-005 + OQ-001 together
+*after* the first real supervisor-loop deployment, not before. Resolve by writing
+a cross-repo ADR (the calibrated boundary) or deferring to `agentic-review-loop`'s
+P4+ phase.
+
 ## How this file evolves
 
 - Add `OQ-NNN` when a mapping pass or a PR surfaces a genuine *cross-repo*
