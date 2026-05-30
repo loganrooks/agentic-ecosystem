@@ -36,3 +36,5 @@ Date: YYYY-MM-DD
 | ADR | Title | Status |
 |---|---|---|
 | [001](ADR-001-review-journal-stays-independent.md) | `pr-review-journal` stays independent; consumers integrate via the verdict-schema contract | accepted |
+| [002](ADR-002-drive-converge-handoff-contract.md) | The drive↔converge handoff is a typed PR-convergence state machine owned at the ecosystem layer | proposed |
+| [003](ADR-003-cross-model-gate-no-skimp-guarantee.md) | Wire cbm's ADR-005 cross-model checkpoint into ARL's merge gate as the loop's no-skimp guarantee | proposed |
