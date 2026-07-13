@@ -1,0 +1,118 @@
+re common</span></div>
+          <div><strong>∞?</strong><span>“unlimited” subscriptions still ration capacity</span></div>
+        </div>
+      </div>
+    </section>
+
+    <section id="learn" class="section-shell section-block">
+      <div class="section-heading">
+        <p class="eyebrow">01 · Progressive learning path</p>
+        <h2>Build the model one layer at a time</h2>
+        <p>Move from a simple token meter to serving-system economics. Each layer keeps the previous one but adds a complication that can reverse an earlier conclusion.</p>
+      </div>
+
+      <div class="learning-layout">
+        <div class="level-rail" role="tablist" aria-label="Learning depth">
+          <button class="level-button active" type="button" role="tab" aria-selected="true" data-level="0"><span>1</span>Request</button>
+          <button class="level-button" type="button" role="tab" aria-selected="false" data-level="1"><span>2</span>Conversation</button>
+          <button class="level-button" type="button" role="tab" aria-selected="false" data-level="2"><span>3</span>Application</button>
+          <button class="level-button" type="button" role="tab" aria-selected="false" data-level="3"><span>4</span>Fleet</button>
+          <button class="level-button" type="button" role="tab" aria-selected="false" data-level="4"><span>5</span>Company</button>
+        </div>
+        <article id="levelPanel" class="learning-panel card" aria-live="polite"></article>
+      </div>
+
+      <div class="request-anatomy card">
+        <div class="card-heading">
+          <div>
+            <p class="eyebrow">Request anatomy</p>
+            <h3>See which token actually dominates</h3>
+          </div>
+          <select id="anatomyModel" aria-label="Model for request anatomy"></select>
+        </div>
+        <div class="anatomy-grid">
+          <div class="controls compact-controls">
+            <label>Uncached input <output id="anatomyInputOut">8,000</output><input id="anatomyInput" type="range" min="0" max="500000" step="1000" value="8000" /></label>
+            <label>Cached input <output id="anatomyCacheOut">40,000</output><input id="anatomyCache" type="range" min="0" max="1000000" step="1000" value="40000" /></label>
+            <label>Output + reasoning <output id="anatomyOutputOut">2,000</output><input id="anatomyOutput" type="range" min="0" max="30000" step="250" value="2000" /></label>
+          </div>
+          <div>
+            <div id="anatomyBar" class="stacked-cost" aria-label="Request cost composition"></div>
+            <div class="metric-row three">
+              <div><span>Input cost</span><strong id="anatomyInputCost">—</strong></div>
+              <div><span>Cache-read cost</span><strong id="anatomyCacheCost">—</strong></div>
+              <div><span>Output cost</span><strong id="anatomyOutputCost">—</strong></div>
+            </div>
+            <div id="anatomyInsight" class="insight-box"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="simulator" class="section-shell section-block">
+      <div class="section-heading split-heading">
+        <div>
+          <p class="eyebrow">02 · Strategy simulator</p>
+          <h2>Compare architectures, not slogans</h2>
+          <p>Replay, caching, compaction, retrieval, routing, and batch processing alter different terms in the cost equation. The cheapest option depends on workload shape.</p>
+        </div>
+        <button id="load800k" class="button secondary" type="button">Load the 800K-session example</button>
+      </div>
+
+      <div class="simulator-layout">
+        <aside class="controls-panel card">
+          <div class="control-group">
+            <h3>Workload</h3>
+            <label>Model<select id="modelSelect"></select></label>
+            <div class="two-col">
+              <label>Turns<input id="turns" type="number" min="1" max="500" value="60" /></label>
+              <label>Session hours<input id="sessionHours" type="number" min="0.05" max="720" step="0.25" value="3" /></label>
+            </div>
+            <label>Reusable system / tools tokens<input id="prefixTokens" type="number" min="0" max="1000000" step="500" value="12000" /></label>
+            <div class="two-col">
+              <label>New user tokens / turn<input id="userTokens" type="number" min="1" max="100000" step="100" value="2500" /></label>
+              <label>Output tokens / turn<input id="outputTokens" type="number" min="1" max="100000" step="100" value="1800" /></label>
+            </div>
+          </div>
+
+          <div class="control-group">
+            <h3>Reuse & context</h3>
+            <label>Realized cache hit rate <output id="cacheHitOut">90%</output><input id="cacheHit" type="range" min="0" max="100" step="1" value="90" /></label>
+            <div class="two-col">
+              <label>Compact above<input id="compactThreshold" type="number" min="1000" max="1000000" step="1000" value="180000" /></label>
+              <label>Compacted state<input id="compactSize" type="number" min="500" max="200000" step="500" value="18000" /></label>
+            </div>
+            <label>Retrieved context / turn<input id="retrievedTokens" type="number" min="0" max="200000" step="500" value="10000" /></label>
+            <label class="toggle-row"><input id="prewarmCache" type="checkbox" />Pre-warm stable prefix cache</label>
+          </div>
+
+          <details class="control-group advanced-pricing">
+            <summary>Pricing assumptions</summary>
+            <div class="two-col">
+              <label>Input $ / MTok<input id="priceInput" type="number" min="0" step="0.001" /></label>
+              <label>Output $ / MTok<input id="priceOutput" type="number" min="0" step="0.001" /></label>
+              <label>Cache read $ / MTok<input id="priceCacheRead" type="number" min="0" step="0.001" /></label>
+              <label>Cache write $ / MTok<input id="priceCacheWrite" type="number" min="0" step="0.001" /></label>
+              <label>Cache storage $ / MTok·h<input id="priceCacheStorage" type="number" min="0" step="0.001" /></label>
+              <label>Batch multiplier<input id="batchMultiplier" type="number" min="0.01" max="1" step="0.05" /></label>
+              <label>Long-context threshold<input id="longThreshold" type="number" min="0" max="2000000" step="1000" /></label>
+              <label>Long input multiplier<input id="longInputMultiplier" type="number" min="1" max="10" step="0.1" /></label>
+              <label>Long output multiplier<input id="longOutputMultiplier" type="number" min="1" max="10" step="0.1" /></label>
+            </div>
+            <p class="microcopy">A threshold of 0 means no long-context surcharge. Cache write semantics differ by provider; this model treats misses on reusable context as writes.</p>
+          </details>
+        </aside>
+
+        <div class="sim-results">
+          <div class="strategy-toolbar card">
+            <span>Delivery:</span>
+            <label class="chip"><input name="delivery" type="radio" value="1" checked />Synchronous</label>
+            <label class="chip"><input name="delivery" type="radio" value="batch" />Batch / flex</label>
+            <label class="chip"><input name="delivery" type="radio" value="priority" />Illustrative priority (1.8×)</label>
+          </div>
+
+          <div id="strategyCards" class="strategy-cards"></div>
+
+          <div class="chart-card card">
+            <div class="card-heading">
+              <div><p class="eyebrow">Cumulative spend</p><h3>Cost o
