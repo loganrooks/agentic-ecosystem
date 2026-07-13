@@ -1,0 +1,108 @@
+('#prewarmCache').checked
+    };
+  }
+
+  function updateSimulator() {
+    const m = modelFromEditor();
+    const p = getParams();
+    const df = deliveryFactor(m);
+    $('#cacheHitOut').textContent = `${Math.round(p.hit*100)}%`;
+    const results = {
+      replay:simulate('replay',m,p,df),
+      cache:simulate('cache',m,p,df),
+      compact:simulate('compact',m,p,df),
+      rag:simulate('rag',m,p,df)
+    };
+    renderStrategyCards(results,p);
+    renderCostChart(results,p.turns);
+    renderDiagnostics(results,m,p,df);
+  }
+
+  function renderStrategyCards(r,p) {
+    const baseline = Math.max(r.replay.total,.000001);
+    const info = [
+      ['replay','Full replay','var(--warning)','Exact history; no cache assumptions'],
+      ['cache','Cached history','var(--accent-2)','Exact history; cache locality required'],
+      ['compact','Cache + compact','var(--accent)','Smaller context; summary fidelity risk'],
+      ['rag','Retrieved working set','var(--accent-3)','Fixed context; retrieval quality risk']
+    ];
+    $('#strategyCards').innerHTML = info.map(([k,title,color,desc]) => {
+      const save = 1-r[k].total/baseline;
+      const rel = k==='replay' ? 'baseline' : `${save>=0?'saves':'costs'} ${fmtPct(Math.abs(save),0)} ${save>=0?'vs replay':'more'}`;
+      return `<article class="strategy-card card" style="--strategy-color:${color}"><h3>${title}</h3><small>${desc}</small><span class="price">${fmtMoney(r[k].total)}</span><span class="relative">${rel}</span><div class="context-stat">Peak context ${fmtNum(r[k].maxContext)} tokens${r[k].compactOps?` · ${r[k].compactOps} compactions`:''}</div></article>`;
+    }).join('');
+  }
+
+  function renderCostChart(results, turns) {
+    const svg = $('#costChart');
+    const W=900,H=360, ml=62,mr=18,mt=18,mb=42;
+    const all = Object.values(results).flatMap(r=>r.cumulative);
+    const maxY = Math.max(...all, .01);
+    const x = i => ml + (i/(Math.max(turns-1,1)))*(W-ml-mr);
+    const y = v => mt + (1-v/maxY)*(H-mt-mb);
+    let out='';
+    for(let i=0;i<=4;i++){
+      const yy=mt+i*(H-mt-mb)/4;
+      const val=maxY*(1-i/4);
+      out+=`<line class="chart-grid" x1="${ml}" x2="${W-mr}" y1="${yy}" y2="${yy}"/><text class="chart-label" x="${ml-10}" y="${yy+4}" text-anchor="end">${fmtMoney(val,1)}</text>`;
+    }
+    [1,Math.ceil(turns/3),Math.ceil(2*turns/3),turns].forEach(t=>{ const xx=x(t-1); out+=`<text class="chart-label" x="${xx}" y="${H-14}" text-anchor="middle">turn ${t}</text>`; });
+    const colors={replay:'var(--warning)',cache:'var(--accent-2)',compact:'var(--accent)',rag:'var(--accent-3)'};
+    for(const k of ['replay','cache','compact','rag']){
+      const pts=results[k].cumulative.map((v,i)=>`${x(i)},${y(v)}`).join(' ');
+      out+=`<polyline class="chart-line" style="stroke:${colors[k]}" points="${pts}"/>`;
+    }
+    svg.innerHTML=out;
+  }
+
+  function renderDiagnostics(r,m,p,df) {
+    const saving = r.cache.total-r.compact.total;
+    const compCostApprox = r.compact.compactOps ? Math.max(0, r.compact.total - (r.cache.total * (r.compact.total/r.cache.total))) : 0;
+    let breakTitle, breakText;
+    if (!r.compact.compactOps) {
+      breakTitle='No compaction triggered';
+      breakText=`Active context peaks at ${fmtNum(r.compact.maxContext)} tokens, below the ${fmtNum(p.compactThreshold)} threshold. Lower the threshold only if later rereads justify the fidelity risk.`;
+    } else if (saving > 0) {
+      breakTitle=`${fmtMoney(saving)} saved`;
+      breakText=`${r.compact.compactOps} compaction pass${r.compact.compactOps>1?'es':''} reduce repeated context enough to beat their own read-and-generate cost.`;
+    } else {
+      breakTitle=`Compaction costs ${fmtMoney(-saving)} more`;
+      breakText='The session ends too soon, the summary is too large, or cache reads are cheap enough that compaction does not amortize.';
+    }
+    $('#breakEvenTitle').textContent=breakTitle; $('#breakEvenText').textContent=breakText;
+
+    const finalTurn = {
+      input:p.user*m.input,
+      output:p.output*m.output,
+      history:Math.max(0,r.cache.maxContext-p.user)*m.cacheRead
+    };
+    const dom = Object.entries(finalTurn).sort((a,b)=>b[1]-a[1])[0][0];
+    const domMap={input:['New input','Shorten tool results, retrieve less, or use a cheaper prefill tier.'],output:['Generated output','Constrain verbosity, route easy work, and measure whether reasoning effort changes accepted outcomes.'],history:['Repeated history','Improve cache hits, compact after milestones, or use retrieval for settled evidence.']};
+    $('#dominantTitle').textContent=domMap[dom][0]; $('#dominantText').textContent=domMap[dom][1];
+
+    if (df < 1) { $('#riskTitle').textContent='Latency → customer'; $('#riskText').textContent='Batch/flex lowers tariff by letting the provider schedule work later and more efficiently.'; }
+    else if (df > 1) { $('#riskTitle').textContent='Capacity → provider'; $('#riskText').textContent='Priority pricing buys stronger scheduling preference; it is valuable only when waiting is expensive.'; }
+    else if (p.hit < .6) { $('#riskTitle').textContent='Cache locality risk'; $('#riskText').textContent='The architecture assumes reuse, but prefixes, TTLs, or routing may be too unstable. Instrument actual cache reads.'; }
+    else { $('#riskTitle').textContent='Fidelity vs repetition'; $('#riskText').textContent='Caching preserves exact history; compaction and retrieval save more only by replacing or selecting it.'; }
+  }
+
+  function advisorScores(state) {
+    const s={cache:0,compact:0,rag:0,batch:0,route:1,output:1,selfhost:0,provision:0};
+    if(state.repeated){s.cache+=5;s.compact+=1;} if(state.long){s.compact+=4;s.rag+=3;s.cache+=2;} if(state.interactive){s.cache+=2;s.route+=1;s.batch-=4;s.output+=2;} if(state.independent){s.batch+=6;s.route+=1;} if(state.fidelity){s.cache+=3;s.compact-=2;s.rag-=1;} else {s.compact+=2;s.rag+=2;} if(state.volume){s.selfhost+=4;s.provision+=5;s.batch+=2;} if(state.privacy){s.selfhost+=4;s.rag+=1;} if(state.ops){s.selfhost+=5;} else{s.selfhost-=4;} return s;
+  }
+
+  function updateAdvisor() {
+    const state={}; $$('[data-advisor]').forEach(x=>state[x.dataset.advisor]=x.checked);
+    const scores=advisorScores(state);
+    const ranked=Object.entries(scores).sort((a,b)=>b[1]-a[1]).slice(0,4);
+    $('#advisorResults').innerHTML=ranked.map(([k,score],i)=>`<article class="recommendation card"><div class="rank">${i+1}</div><div><h3>${strategyDefs[k].title}</h3><p>${strategyDefs[k].works}</p><div class="caveat"><b>Stops working when:</b> ${strategyDefs[k].caveat}</div></div></article>`).join('');
+  }
+
+  function renderPricingTabs(active=0) {
+    $('#pricingModelTabs').innerHTML=pricingModels.map((p,i)=>`<button class="tab-button ${i===active?'active':''}" type="button" role="tab" aria-selected="${i===active}" data-pricing-tab="${i}">${p.name}</button>`).join('');
+    const p=pricingModels[active];
+    $('#pricingModelPanel').innerHTML=`<div><p class="eyebrow">Contract lens</p><h3>${p.name}</h3><p>${p.intro}</p></div><div class="risk-table">${p.rows.map(r=>`<div class="risk-row"><b>${r[0]}</b><span>${r[1]}</span></div>`).join('')}</div>`;
+  }
+
+  function updateEconomics() {
+    const hw=num('#econHardwareCost'), life=num('#econLife'), util=clamp(num('#econUtil')/100,.01,1), power=num('#econPower'), pue=num('#econPue'), elec=num('#econElectricity'), prefill=Math.max(1,num('#econPrefill')), decode=Math.max(1,num('#econDecode')), ops=Math.max(1,num('#econOpsMultiplier')), soldIn=num('#econSoldInput'), soldOut=num('#econSold
