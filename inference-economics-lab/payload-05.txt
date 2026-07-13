@@ -1,0 +1,113 @@
+e gross margin</span><strong id="econMargin">—</strong><small>before non-inference allocation</small></div>
+          </div>
+
+          <div class="economics-stack card">
+            <div class="card-heading"><div><p class="eyebrow">Cost stack</p><h3>Why list price is not hardware cost</h3></div></div>
+            <div id="econStack" class="waterfall"></div>
+            <p id="econInterpretation" class="insight-box"></p>
+          </div>
+
+          <div class="economics-explainers">
+            <article class="card"><h3>Prefill</h3><p>Processes the prompt and constructs attention state. It is comparatively parallel and compute-oriented. Longer inputs increase time-to-first-token and KV-cache footprint.</p></article>
+            <article class="card"><h3>Decode</h3><p>Generates tokens sequentially while repeatedly reading model weights and an expanding KV cache. Fleet throughput, batching, memory bandwidth, and latency SLOs shape its economics.</p></article>
+            <article class="card"><h3>Goodput</h3><p>Raw tokens per second are not enough. A provider earns useful capacity only when requests meet latency and reliability targets. Tight SLOs can lower utilization and raise COGS.</p></article>
+          </div>
+
+          <details class="method-note card">
+            <summary>Important limitations</summary>
+            <p>The sandbox uses amortized hardware cost and aggregate throughput. It omits model-specific FLOPs, quantization, speculative decoding, heterogeneous fleets, reserved-capacity contracts, financing, taxes, training amortization, and demand elasticity. Single-user tokens/second should not be substituted for aggregate fleet throughput. Public API prices reveal commercial strategy, not private COGS.</p>
+          </details>
+        </div>
+      </div>
+    </section>
+
+    <section class="section-shell section-block">
+      <div class="section-heading">
+        <p class="eyebrow">06 · Subscription vs API</p>
+        <h2>Translate a monthly plan into an implied token budget</h2>
+        <p>Subscriptions pool risk across users and impose limits, priority tiers, or fair-use controls. Their value depends on your actual workload—not an imaginary unlimited API equivalent.</p>
+      </div>
+      <div class="subscription-lab card">
+        <div class="controls compact-controls">
+          <div class="two-col">
+            <label>Monthly plan price ($)<input id="subPrice" type="number" min="0" step="1" value="200" /></label>
+            <label>Active days / month<input id="subDays" type="number" min="1" max="31" value="24" /></label>
+            <label>Sessions / active day<input id="subSessions" type="number" min="0.1" step="0.5" value="4" /></label>
+            <label>Turns / session<input id="subTurns" type="number" min="1" value="20" /></label>
+            <label>Input tokens / turn<input id="subInput" type="number" min="1" step="100" value="14000" /></label>
+            <label>Output tokens / turn<input id="subOutput" type="number" min="1" step="100" value="1800" /></label>
+            <label>API input $ / MTok<input id="subInputPrice" type="number" min="0" step="0.1" value="2.5" /></label>
+            <label>API output $ / MTok<input id="subOutputPrice" type="number" min="0" step="0.1" value="15" /></label>
+          </div>
+        </div>
+        <div class="subscription-results">
+          <div class="big-number"><span>Estimated API equivalent</span><strong id="subApiEquivalent">—</strong><small>before cache discounts, tools, and long-context modifiers</small></div>
+          <div class="metric-row three">
+            <div><span>Implied discount / premium</span><strong id="subDifference">—</strong></div>
+            <div><span>Break-even turns / month</span><strong id="subBreakEven">—</strong></div>
+            <div><span>Plan cost / working turn</span><strong id="subPerTurn">—</strong></div>
+          </div>
+          <p id="subInsight" class="insight-box"></p>
+        </div>
+      </div>
+    </section>
+
+    <section id="prices" class="section-shell section-block">
+      <div class="section-heading split-heading">
+        <div>
+          <p class="eyebrow">07 · Provider price snapshot</p>
+          <h2>Compare the tariff—and its rules</h2>
+          <p>Prices per million tokens in USD. A low input price is not directly comparable when tokenizers, reasoning accounting, long-context tiers, tools, cache TTLs, or service levels differ.</p>
+        </div>
+        <div class="filter-group" aria-label="Provider filters">
+          <button class="filter active" type="button" data-provider-filter="all">All</button>
+          <button class="filter" type="button" data-provider-filter="OpenAI">OpenAI</button>
+          <button class="filter" type="button" data-provider-filter="Anthropic">Anthropic</button>
+          <button class="filter" type="button" data-provider-filter="Google">Google</button>
+          <button class="filter" type="button" data-provider-filter="Mistral">Mistral</button>
+        </div>
+      </div>
+      <div class="table-wrap card">
+        <table>
+          <thead><tr><th>Provider / model</th><th>Input</th><th>Cache read</th><th>Cache write / storage</th><th>Output</th><th>Important modifier</th></tr></thead>
+          <tbody id="priceTableBody"></tbody>
+        </table>
+      </div>
+      <p class="microcopy">Snapshot date: 13 July 2026. Anthropic Sonnet 5 introductory pricing shown through 31 August 2026. Verify prices before making purchasing decisions.</p>
+    </section>
+
+    <section class="section-shell section-block sources-section">
+      <div class="section-heading">
+        <p class="eyebrow">08 · Method and sources</p>
+        <h2>What the site claims—and what it refuses to pretend</h2>
+      </div>
+      <div class="method-grid">
+        <article class="card"><h3>Measured</h3><p>Token counts, cache reads/writes, latency distributions, quality metrics, and actual invoice line items from your workload.</p></article>
+        <article class="card"><h3>Published</h3><p>Provider list prices, context rules, cache TTLs, batch discounts, and model availability as stated in official documentation.</p></article>
+        <article class="card"><h3>Modelled</h3><p>Break-even points, hypothetical hardware COGS, strategy comparisons, and subscription equivalents. These depend on editable assumptions.</p></article>
+        <article class="card"><h3>Unknown</h3><p>Named providers’ model-level COGS, negotiated enterprise rates, fleet utilization, cross-subsidies, and how consumer limits map to API tokens.</p></article>
+      </div>
+      <div id="sourceList" class="source-list card"></div>
+    </section>
+  </main>
+
+  <footer class="site-footer section-shell">
+    <p><strong>Inference Economics Lab</strong> · A local, dependency-free educational simulator.</p>
+    <p>Built to reward better questions, not false precision.</p>
+  </footer>
+
+  <script>
+(() => {
+  'use strict';
+
+  const SNAPSHOT = '2026-07-13';
+  const $ = (s, root = document) => root.querySelector(s);
+  const $$ = (s, root = document) => [...root.querySelectorAll(s)];
+  const clamp = (n, min, max) => Math.min(max, Math.max(min, n));
+  const num = (id) => Number($(id).value || 0);
+  const fmtMoney = (n, digits = 2) => {
+    if (!Number.isFinite(n)) return '—';
+    if (Math.abs(n) < 0.01 && n !== 0) return `$${n.toFixed(4)}`;
+    return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: digits }).format(n);
+  };
+  const fmtNum = (n, digits = 0
