@@ -1,0 +1,98 @@
+ver turns</h3></div>
+              <div class="chart-legend"><span class="legend replay">Replay</span><span class="legend cache">Cache</span><span class="legend compact">Compact</span><span class="legend rag">Retrieve</span></div>
+            </div>
+            <svg id="costChart" class="line-chart" viewBox="0 0 900 360" role="img" aria-label="Cumulative cost over conversation turns"></svg>
+          </div>
+
+          <div class="diagnostic-grid">
+            <article class="card"><p class="eyebrow">Break-even</p><h3 id="breakEvenTitle">—</h3><p id="breakEvenText">—</p></article>
+            <article class="card"><p class="eyebrow">Dominant cost</p><h3 id="dominantTitle">—</h3><p id="dominantText">—</p></article>
+            <article class="card"><p class="eyebrow">Risk transfer</p><h3 id="riskTitle">—</h3><p id="riskText">—</p></article>
+          </div>
+
+          <details class="method-note card">
+            <summary>How the simulator works</summary>
+            <p>Each turn prices the active context and generated output. Cache hits use the cache-read rate; missed reusable prefixes use the cache-write rate; new user tokens use the standard input rate. Compaction is modelled as an extra read-and-generate pass that replaces dynamic history with a smaller state. Retrieval keeps a fixed working set rather than replaying the complete transcript. Delivery multipliers are applied uniformly in this teaching model, although real providers may discount input, cache, and output differently. Provider implementations differ, so the pricing editor is intentionally exposed.</p>
+          </details>
+        </div>
+      </div>
+    </section>
+
+    <section id="advisor" class="section-shell section-block">
+      <div class="section-heading">
+        <p class="eyebrow">03 · Situational strategy advisor</p>
+        <h2>What is valuable for this workload?</h2>
+        <p>Select the properties that actually matter. The advisor explains why a technique fits—and the condition under which it stops fitting.</p>
+      </div>
+      <div class="advisor-layout">
+        <div class="advisor-questions card">
+          <label><input type="checkbox" data-advisor="interactive" checked /><span><b>Users are waiting</b><small>Low time-to-first-token and smooth generation matter.</small></span></label>
+          <label><input type="checkbox" data-advisor="repeated" checked /><span><b>Large prefixes repeat</b><small>System prompts, tools, documents, or chat history recur.</small></span></label>
+          <label><input type="checkbox" data-advisor="long" checked /><span><b>Sessions become long</b><small>Active context can grow for dozens of turns.</small></span></label>
+          <label><input type="checkbox" data-advisor="independent" /><span><b>Jobs are independent</b><small>They can wait and do not need shared mutable state.</small></span></label>
+          <label><input type="checkbox" data-advisor="fidelity" checked /><span><b>Small details matter</b><small>Lossy summaries could cause expensive errors.</small></span></label>
+          <label><input type="checkbox" data-advisor="volume" /><span><b>Demand is predictable</b><small>High, steady utilization is plausible.</small></span></label>
+          <label><input type="checkbox" data-advisor="privacy" /><span><b>Data locality is strict</b><small>Third-party retention or residency is constrained.</small></span></label>
+          <label><input type="checkbox" data-advisor="ops" /><span><b>You can operate infrastructure</b><small>GPU scheduling, observability, upgrades, and incidents are acceptable.</small></span></label>
+        </div>
+        <div id="advisorResults" class="advisor-results" aria-live="polite"></div>
+      </div>
+    </section>
+
+    <section class="section-shell section-block">
+      <div class="section-heading">
+        <p class="eyebrow">04 · Pricing-model map</p>
+        <h2>Every price transfers a different risk</h2>
+        <p>A cheap token price can be the wrong contract. Compare who bears idle capacity, latency variance, demand spikes, integration work, and quality risk.</p>
+      </div>
+      <div id="pricingModelTabs" class="tabs" role="tablist" aria-label="Pricing models"></div>
+      <article id="pricingModelPanel" class="pricing-model-panel card"></article>
+    </section>
+
+    <section id="economics" class="section-shell section-block">
+      <div class="section-heading">
+        <p class="eyebrow">05 · Provider economics sandbox</p>
+        <h2>From accelerator-seconds to a company</h2>
+        <p>Estimate marginal inference COGS, then add the layers hidden by a token tariff. This is a transparent hypothetical—not an estimate of any named provider’s private costs.</p>
+      </div>
+
+      <div class="economics-grid">
+        <aside class="controls-panel card">
+          <div class="control-group">
+            <h3>Serving hardware</h3>
+            <label>Accelerator + server allocation ($)<input id="econHardwareCost" type="number" min="1000" step="1000" value="55000" /></label>
+            <div class="two-col">
+              <label>Useful life (years)<input id="econLife" type="number" min="0.5" max="10" step="0.5" value="4" /></label>
+              <label>Fleet utilization (%)<input id="econUtil" type="number" min="1" max="100" step="1" value="55" /></label>
+            </div>
+            <div class="two-col">
+              <label>Power draw (kW)<input id="econPower" type="number" min="0" max="10" step="0.05" value="1.1" /></label>
+              <label>PUE<input id="econPue" type="number" min="1" max="3" step="0.05" value="1.2" /></label>
+            </div>
+            <label>Electricity ($ / kWh)<input id="econElectricity" type="number" min="0" max="2" step="0.01" value="0.09" /></label>
+          </div>
+          <div class="control-group">
+            <h3>Serving performance</h3>
+            <div class="two-col">
+              <label>Aggregate prefill tok/s<input id="econPrefill" type="number" min="1" step="100" value="12000" /></label>
+              <label>Aggregate decode tok/s<input id="econDecode" type="number" min="1" step="10" value="950" /></label>
+            </div>
+            <label>Serving + operations multiplier<input id="econOpsMultiplier" type="number" min="1" max="10" step="0.1" value="1.8" /></label>
+            <p class="microcopy">The multiplier represents networking, CPUs, storage, orchestration, safety systems, failures, and direct serving labour—not R&amp;D or sales.</p>
+          </div>
+          <div class="control-group">
+            <h3>Commercial layer</h3>
+            <div class="two-col">
+              <label>Sold input $ / MTok<input id="econSoldInput" type="number" min="0" step="0.1" value="5" /></label>
+              <label>Sold output $ / MTok<input id="econSoldOutput" type="number" min="0" step="0.1" value="30" /></label>
+            </div>
+            <label>Non-inference allocation (% revenue)<input id="econNonInference" type="number" min="0" max="500" step="1" value="45" /></label>
+          </div>
+        </aside>
+
+        <div class="economics-results">
+          <div class="metric-row four card">
+            <div><span>Active hardware cost</span><strong id="econCostSecond">—</strong><small>per accelerator-second</small></div>
+            <div><span>Prefill COGS</span><strong id="econInputCogs">—</strong><small>per MTok</small></div>
+            <div><span>Decode COGS</span><strong id="econOutputCogs">—</strong><small>per MTok</small></div>
+            <div><span>Illustrativ
