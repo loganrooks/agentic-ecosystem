@@ -1,0 +1,146 @@
+l').value = 'openai-sol';
+  }
+
+  function renderLevel(i) {
+    const d = learningLevels[i];
+    $('#levelPanel').innerHTML = `<p class="level-kicker">${d.kicker}</p><h3>${d.title}</h3><p>${d.body}</p><div class="concept-equation">${d.equation}</div><div class="concept-grid">${d.boxes.map(b=>`<div><b>${b[0]}</b><small>${b[1]}</small></div>`).join('')}</div>`;
+    $$('.level-button').forEach((b, idx) => { b.classList.toggle('active', idx===i); b.setAttribute('aria-selected', String(idx===i)); });
+  }
+
+  function requestPrice(model, standardTokens, cacheReadTokens, cacheWriteTokens, outputTokens, contextTokens, deliveryFactor=1) {
+    const isLong = model.longThreshold > 0 && contextTokens > model.longThreshold;
+    const im = isLong ? model.longInput : 1;
+    const om = isLong ? model.longOutput : 1;
+    const inputCost = (standardTokens * model.input + cacheReadTokens * model.cacheRead + cacheWriteTokens * model.cacheWrite) / 1e6 * im * deliveryFactor;
+    const outputCost = outputTokens * model.output / 1e6 * om * deliveryFactor;
+    return { inputCost, outputCost, total: inputCost + outputCost, isLong };
+  }
+
+  function updateAnatomy() {
+    const m = models[$('#anatomyModel').value];
+    const input = num('#anatomyInput'), cache = num('#anatomyCache'), output = num('#anatomyOutput');
+    $('#anatomyInputOut').textContent = fmtNum(input);
+    $('#anatomyCacheOut').textContent = fmtNum(cache);
+    $('#anatomyOutputOut').textContent = fmtNum(output);
+    const priced = requestPrice(m, input, cache, 0, output, input+cache, 1);
+    const inputMultiplier = priced.isLong ? m.longInput : 1;
+    const outputMultiplier = priced.isLong ? m.longOutput : 1;
+    const parts = [input*m.input/1e6*inputMultiplier, cache*m.cacheRead/1e6*inputMultiplier, output*m.output/1e6*outputMultiplier];
+    const total = Math.max(parts.reduce((a,b)=>a+b,0), .000001);
+    $('#anatomyBar').innerHTML = `<div class="cost-input" style="flex:${parts[0]/total}">input</div><div class="cost-cache" style="flex:${parts[1]/total}">cache</div><div class="cost-output" style="flex:${parts[2]/total}">output</div>`;
+    $('#anatomyInputCost').textContent = fmtMoney(parts[0]);
+    $('#anatomyCacheCost').textContent = fmtMoney(parts[1]);
+    $('#anatomyOutputCost').textContent = fmtMoney(parts[2]);
+    const maxIndex = parts.indexOf(Math.max(...parts));
+    const labels = ['uncached input','cached history','output'];
+    let insight = `<b>${labels[maxIndex]} dominates this request.</b> `;
+    if (maxIndex === 2) insight += 'Reducing generated tokens or routing easy turns can matter more than trimming the prompt.';
+    else if (maxIndex === 1) insight += 'The cache discount is large, but repeated history is not free; compaction may still pay after enough turns.';
+    else insight += 'Look for static-prefix caching, retrieval, shorter tool schemas, or a lower-priced prefill model.';
+    if (priced.isLong) insight += ` This request crosses the model’s long-context threshold, so a full-request multiplier applies.`;
+    $('#anatomyInsight').innerHTML = insight;
+    $('#heroRequestCost').textContent = fmtMoney(priced.total, 4);
+  }
+
+  function modelFromEditor() {
+    return {
+      ...models[$('#modelSelect').value],
+      input:num('#priceInput'), output:num('#priceOutput'), cacheRead:num('#priceCacheRead'), cacheWrite:num('#priceCacheWrite'), cacheStorage:num('#priceCacheStorage'), batch:num('#batchMultiplier'), longThreshold:num('#longThreshold'), longInput:num('#longInputMultiplier'), longOutput:num('#longOutputMultiplier')
+    };
+  }
+
+  function loadModelEditor() {
+    const m = models[$('#modelSelect').value];
+    $('#priceInput').value = m.input; $('#priceOutput').value = m.output; $('#priceCacheRead').value = m.cacheRead; $('#priceCacheWrite').value = m.cacheWrite;
+    $('#priceCacheStorage').value = m.cacheStorage; $('#batchMultiplier').value = m.batch; $('#longThreshold').value = m.longThreshold;
+    $('#longInputMultiplier').value = m.longInput; $('#longOutputMultiplier').value = m.longOutput;
+    updateSimulator();
+  }
+
+  function deliveryFactor(m) {
+    const selected = $('input[name="delivery"]:checked').value;
+    if (selected === 'batch') return m.batch;
+    if (selected === 'priority') return 1.8;
+    return 1;
+  }
+
+  function simulate(kind, m, params, df) {
+    let dynamic = 0;
+    let stableWarm = params.prewarm;
+    let dynamicFresh = false;
+    let total = 0;
+    let totalInput = 0, totalOutput = 0, totalCacheRead = 0, totalCacheWrite = 0, compactOps = 0, maxContext = 0;
+    const cumulative = [];
+    const contexts = [];
+    const storageSamples = [];
+
+    for (let turn=1; turn<=params.turns; turn++) {
+      let activeDynamic = dynamic;
+      if (kind === 'rag') activeDynamic = params.retrieved;
+      const context = params.prefix + activeDynamic + params.user;
+      maxContext = Math.max(maxContext, context);
+      contexts.push(context);
+
+      let standard = params.user;
+      let read = 0;
+      let write = 0;
+
+      if (kind === 'replay') {
+        standard += params.prefix + activeDynamic;
+      } else {
+        if (params.prefix > 0) {
+          if (stableWarm) {
+            read += params.prefix * params.hit;
+            write += params.prefix * (1-params.hit);
+          } else {
+            write += params.prefix;
+            stableWarm = true;
+          }
+        }
+        if (activeDynamic > 0) {
+          if (dynamicFresh) {
+            write += activeDynamic;
+            dynamicFresh = false;
+          } else {
+            read += activeDynamic * params.hit;
+            write += activeDynamic * (1-params.hit);
+          }
+        }
+      }
+
+      const priced = requestPrice(m, standard, read, write, params.output, context, df);
+      total += priced.total;
+      totalInput += standard;
+      totalOutput += params.output;
+      totalCacheRead += read;
+      totalCacheWrite += write;
+      storageSamples.push(params.prefix + activeDynamic);
+
+      if (kind !== 'rag') dynamic += params.user + params.output;
+
+      if (kind === 'compact' && params.compactThreshold > 0 && params.prefix + dynamic > params.compactThreshold && turn < params.turns) {
+        const compContext = params.prefix + dynamic;
+        const compRead = compContext * params.hit;
+        const compWrite = compContext * (1-params.hit);
+        const c = requestPrice(m, 0, compRead, compWrite, params.compactSize, compContext, df);
+        total += c.total;
+        totalOutput += params.compactSize;
+        totalCacheRead += compRead;
+        totalCacheWrite += compWrite;
+        compactOps++;
+        dynamic = params.compactSize;
+        dynamicFresh = true;
+      }
+
+      const avgCached = storageSamples.reduce((a,b)=>a+b,0)/storageSamples.length;
+      const storageAccrued = m.cacheStorage > 0 && kind !== 'replay' ? avgCached/1e6 * m.cacheStorage * (params.hours/params.turns) : 0;
+      total += storageAccrued;
+      cumulative.push(total);
+    }
+
+    return { total, totalInput, totalOutput, totalCacheRead, totalCacheWrite, compactOps, maxContext, cumulative, contexts };
+  }
+
+  function getParams() {
+    return {
+      turns:clamp(Math.round(num('#turns')),1,500), hours:Math.max(.01,num('#sessionHours')), prefix:Math.max(0,num('#prefixTokens')), user:Math.max(1,num('#userTokens')), output:Math.max(1,num('#outputTokens')), hit:clamp(num('#cacheHit')/100,0,1), compactThreshold:Math.max(0,num('#compactThreshold')), compactSize:Math.max(0,num('#compactSize')), retrieved:Math.max(0,num('#retrievedTokens')), prewarm:$
