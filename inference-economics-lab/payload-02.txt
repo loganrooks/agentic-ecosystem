@@ -1,0 +1,128 @@
+ing: 13px 15px; }
+.risk-row span { color: var(--muted); }
+.economics-grid { display: grid; grid-template-columns: 340px 1fr; gap: 20px; align-items: start; }
+.economics-results { display: grid; gap: 18px; }
+.economics-stack { padding: 24px; box-shadow: none; }
+.waterfall { display: grid; gap: 8px; }
+.waterfall-row { display: grid; grid-template-columns: 150px 1fr 90px; gap: 12px; align-items: center; }
+.waterfall-row span { color: var(--muted); font-size: 13px; }
+.waterfall-track { height: 28px; background: var(--card-2); border-radius: 7px; overflow: hidden; }
+.waterfall-fill { height: 100%; min-width: 2px; border-radius: 7px; background: var(--accent-2); }
+.waterfall-row:nth-child(2) .waterfall-fill { background: var(--accent-3); }
+.waterfall-row:nth-child(3) .waterfall-fill { background: var(--warning); }
+.waterfall-row:nth-child(4) .waterfall-fill { background: var(--accent); }
+.waterfall-row strong { text-align: right; font-variant-numeric: tabular-nums; }
+.economics-explainers { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+.economics-explainers article { padding: 22px; box-shadow: none; }
+.economics-explainers h3 { margin-top: 0; }
+.economics-explainers p { color: var(--muted); }
+.subscription-lab { padding: 28px; display: grid; grid-template-columns: .85fr 1.15fr; gap: 38px; box-shadow: none; }
+.subscription-results { display: grid; gap: 18px; align-content: center; }
+.big-number { display: grid; }
+.big-number span { color: var(--muted); }
+.big-number strong { font-size: clamp(46px, 6vw, 82px); line-height: 1; letter-spacing: -.06em; color: var(--accent); font-variant-numeric: tabular-nums; }
+.big-number small { color: var(--faint); }
+.filter-group { display: flex; flex-wrap: wrap; gap: 7px; }
+.filter { border: 1px solid var(--line); border-radius: 999px; padding: 7px 11px; background: transparent; color: var(--muted); cursor: pointer; }
+.filter.active { background: var(--card); color: var(--text); border-color: var(--accent); }
+.table-wrap { overflow-x: auto; box-shadow: none; }
+table { border-collapse: collapse; width: 100%; min-width: 920px; }
+th, td { padding: 17px 18px; border-bottom: 1px solid var(--line); text-align: left; vertical-align: top; }
+th { color: var(--muted); font-size: 12px; text-transform: uppercase; letter-spacing: .08em; }
+td { font-size: 14px; }
+td strong { display: block; }
+td small { color: var(--muted); }
+tbody tr:last-child td { border-bottom: 0; }
+.provider-pill { display: inline-block; margin-top: 5px; padding: 3px 7px; border: 1px solid var(--line); border-radius: 999px; color: var(--muted); font-size: 10px; text-transform: uppercase; letter-spacing: .07em; }
+.method-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
+.method-grid article { padding: 22px; box-shadow: none; }
+.method-grid h3 { margin-top: 0; }
+.method-grid p { color: var(--muted); }
+.source-list { margin-top: 18px; padding: 26px; box-shadow: none; columns: 2; column-gap: 40px; }
+.source-item { break-inside: avoid; margin-bottom: 18px; }
+.source-item a { text-decoration-color: var(--line); text-underline-offset: 3px; }
+.source-item p { margin: 3px 0 0; color: var(--muted); font-size: 13px; }
+.site-footer { padding-block: 100px 45px; display: flex; justify-content: space-between; gap: 30px; color: var(--faint); border-top: 1px solid var(--line); margin-top: 110px; }
+@media (max-width: 1050px) {
+  .top-nav { display: none; }
+  .site-header { grid-template-columns: 1fr auto; }
+  .hero { grid-template-columns: 1fr; min-height: auto; }
+  .hero-visual { max-width: 720px; }
+  .simulator-layout, .economics-grid { grid-template-columns: 1fr; }
+  .controls-panel { position: static; }
+  .strategy-cards { grid-template-columns: 1fr 1fr; }
+  .method-grid { grid-template-columns: 1fr 1fr; }
+  .pricing-model-panel { grid-template-columns: 1fr; }
+}
+@media (max-width: 760px) {
+  .section-shell { width: min(100% - 28px, var(--max)); }
+  .site-header { padding: 0 14px; }
+  .brand { font-size: 14px; }
+  .hero { padding-block: 58px; gap: 35px; }
+  .hero h1 { font-size: 58px; }
+  .section-block { padding-top: 80px; }
+  .section-heading h2 { font-size: 42px; }
+  .split-heading { display: block; }
+  .learning-layout, .anatomy-grid, .advisor-layout, .subscription-lab { grid-template-columns: 1fr; }
+  .level-rail { grid-template-columns: repeat(5, 1fr); overflow-x: auto; }
+  .level-button { justify-content: center; padding: 8px; min-width: 52px; }
+  .level-button:not(.active) { font-size: 0; }
+  .level-button span { font-size: 13px; }
+  .concept-grid, .diagnostic-grid, .economics-explainers { grid-template-columns: 1fr; }
+  .strategy-cards, .metric-row.four, .metric-row.three { grid-template-columns: 1fr 1fr; }
+  .source-list { columns: 1; }
+  .method-grid { grid-template-columns: 1fr; }
+  .site-footer { display: block; }
+}
+@media (max-width: 480px) {
+  .hero h1 { font-size: 48px; }
+  .hero-mini-grid { grid-template-columns: 1fr; }
+  .two-col, .strategy-cards, .metric-row.four, .metric-row.three { grid-template-columns: 1fr; }
+  .learning-panel, .pricing-model-panel { padding: 24px; }
+}
+
+</style>
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to content</a>
+  <header class="site-header">
+    <a class="brand" href="#top" aria-label="Inference Economics Lab home">
+      <span class="brand-mark" aria-hidden="true">∴</span>
+      <span>Inference Economics Lab</span>
+    </a>
+    <nav class="top-nav" aria-label="Primary navigation">
+      <a href="#learn">Learn</a>
+      <a href="#simulator">Simulator</a>
+      <a href="#advisor">Advisor</a>
+      <a href="#economics">Provider economics</a>
+      <a href="#prices">Prices</a>
+    </nav>
+    <button id="themeToggle" class="icon-button" type="button" aria-label="Toggle colour theme" title="Toggle colour theme">◐</button>
+  </header>
+
+  <main id="main">
+    <section id="top" class="hero section-shell">
+      <div class="hero-copy">
+        <p class="eyebrow">Interactive field guide · pricing snapshot 13 July 2026</p>
+        <h1>The cost is not<br><em>the token count.</em></h1>
+        <p class="lede">Learn why two systems processing the same words can have radically different bills, latency, reliability, and provider margins—and when a “saving” quietly shifts cost somewhere else.</p>
+        <div class="hero-actions">
+          <a class="button primary" href="#learn">Start with the intuition</a>
+          <a class="button secondary" href="#simulator">Model a workload</a>
+        </div>
+        <p class="microcopy">All assumptions are visible and editable. Prices are illustrative snapshots, not purchasing advice.</p>
+      </div>
+      <div class="hero-visual card" aria-label="Animated request cost anatomy">
+        <div class="meter-head">
+          <span>One request</span><span id="heroRequestCost">$0.0248</span>
+        </div>
+        <div class="token-stream" aria-hidden="true">
+          <span class="token system">system</span><span class="token cache">cached history</span><span class="token input">new input</span><span class="token output">generated output</span>
+        </div>
+        <div class="hero-equation">
+          <span>price</span><b>≠</b><span>provider cost</span><b>≠</b><span>value</span>
+        </div>
+        <div class="hero-mini-grid">
+          <div><strong>10×</strong><span>cache-read discounts are common</span></div>
+          <div><strong>4–10×</strong><span>output often costs more than input</span></div>
+          <div><strong>50%</strong><span>batch discounts a
