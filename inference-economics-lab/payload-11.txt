@@ -1,0 +1,18 @@
+','#econOpsMultiplier','#econSoldInput','#econSoldOutput','#econNonInference'];
+    econIds.forEach(id=>$(id).addEventListener('input',updateEconomics));
+    const subIds=['#subPrice','#subDays','#subSessions','#subTurns','#subInput','#subOutput','#subInputPrice','#subOutputPrice'];
+    subIds.forEach(id=>$(id).addEventListener('input',updateSubscription));
+    $$('.filter').forEach(b=>b.addEventListener('click',()=>{ $$('.filter').forEach(x=>x.classList.remove('active')); b.classList.add('active'); renderPriceTable(b.dataset.providerFilter); }));
+  }
+
+  function init() {
+    document.documentElement.dataset.theme=safeStorage.get('iel-theme')||'dark';
+    populateSelects(); renderLevel(0); renderPricingTabs(0); renderPriceTable(); renderSources(); bindEvents(); loadModelEditor(); updateAnatomy(); updateAdvisor(); updateEconomics(); updateSubscription();
+  }
+
+  init();
+})();
+
+</script>
+</body>
+</html>
