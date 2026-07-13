@@ -1,0 +1,88 @@
+Output'), nonInf=num('#econNonInference')/100;
+    const lifeSeconds=life*365.25*24*3600;
+    const depreciationActive=hw/(lifeSeconds*util);
+    const energySecond=power*pue*elec/3600;
+    const directSecond=(depreciationActive+energySecond)*ops;
+    const inputCogs=directSecond*(1e6/prefill);
+    const outputCogs=directSecond*(1e6/decode);
+    const blendedRevenue=soldIn+soldOut;
+    const blendedCogs=inputCogs+outputCogs;
+    const margin=blendedRevenue>0?1-blendedCogs/blendedRevenue:0;
+    const fullyLoaded=blendedCogs+blendedRevenue*nonInf;
+    const retained=blendedRevenue-fullyLoaded;
+    $('#econCostSecond').textContent=fmtMoney(directSecond,5);
+    $('#econInputCogs').textContent=fmtMoney(inputCogs,2);
+    $('#econOutputCogs').textContent=fmtMoney(outputCogs,2);
+    $('#econMargin').textContent=fmtPct(margin,0);
+    const rows=[['Direct serving COGS',blendedCogs],['Non-inference allocation',blendedRevenue*nonInf],['Retained contribution',Math.max(0,retained)],['Commercial price',blendedRevenue]];
+    const max=Math.max(...rows.map(r=>r[1]),.001);
+    $('#econStack').innerHTML=rows.map(r=>`<div class="waterfall-row"><span>${r[0]}</span><div class="waterfall-track"><div class="waterfall-fill" style="width:${clamp(r[1]/max*100,0,100)}%"></div></div><strong>${fmtMoney(r[1])}</strong></div>`).join('');
+    let text=`At these assumptions, decode costs about ${inputCogs>0?(outputCogs/inputCogs).toFixed(1):'—'}× as much per token as prefill because aggregate decode throughput is lower. `;
+    if (retained >= 0) text += `${fmtMoney(retained)} per paired million input + output tokens remains after the chosen direct and non-inference allocations.`;
+    else text += `The assumed tariff does not cover the chosen serving and non-inference allocations; the shortfall is ${fmtMoney(-retained)} per paired million input + output tokens.`;
+    text += ' This does not imply a real provider margin: actual throughput, utilization, negotiated prices, and cost allocation are private.';
+    $('#econInterpretation').textContent=text;
+  }
+
+  function updateSubscription() {
+    const plan=num('#subPrice'), days=num('#subDays'), sessions=num('#subSessions'), turns=num('#subTurns'), input=num('#subInput'), output=num('#subOutput'), ip=num('#subInputPrice'), op=num('#subOutputPrice');
+    const monthlyTurns=days*sessions*turns;
+    const apiPerTurn=input/1e6*ip+output/1e6*op;
+    const api=monthlyTurns*apiPerTurn;
+    const diff=api-plan;
+    const be=apiPerTurn>0?plan/apiPerTurn:Infinity;
+    $('#subApiEquivalent').textContent=fmtMoney(api);
+    $('#subDifference').textContent=diff>=0?`${fmtMoney(diff)} less on plan`:`${fmtMoney(-diff)} premium`;
+    $('#subBreakEven').textContent=Number.isFinite(be)?fmtNum(be):'—';
+    $('#subPerTurn').textContent=monthlyTurns>0?fmtMoney(plan/monthlyTurns,3):'—';
+    let insight;
+    if(api>plan*1.5) insight='At this workload, the subscription appears valuable relative to list-price API use—but the comparison assumes the product lets you sustain this usage, use equivalent models, and avoid queueing or weekly limits.';
+    else if(api<plan*.67) insight='The API appears cheaper at the stated workload. A subscription may still be valuable for bundled tools, product UX, privacy controls, or unpredictable spikes.';
+    else insight='The direct price comparison is close. Workflow fit, model access, caching behaviour, limits, and bundled tools are likely more important than the headline fee.';
+    $('#subInsight').textContent=insight;
+  }
+
+  const priceRows = [
+    ['OpenAI','GPT-5.6 Sol','$5.00','$0.50','$6.25 write','$30.00','>272K input: 2× input, 1.5× output'],
+    ['OpenAI','GPT-5.6 Terra','$2.50','$0.25','$3.125 write','$15.00','>272K input: 2× input, 1.5× output'],
+    ['OpenAI','GPT-5.6 Luna','$1.00','$0.10','$1.25 write','$6.00','>272K input: 2× input, 1.5× output'],
+    ['Anthropic','Claude Fable 5','$10.00','$1.00','$12.50 / $20 write','$50.00','5m / 1h cache; 1M standard rate'],
+    ['Anthropic','Claude Opus 4.8','$5.00','$0.50','$6.25 / $10 write','$25.00','5m / 1h cache; 1M standard rate'],
+    ['Anthropic','Claude Sonnet 5 · intro','$2.00','$0.20','$2.50 / $4 write','$10.00','Intro through 31 Aug 2026'],
+    ['Google','Gemini 3.5 Flash','$1.50','$0.15','$1.00 / MTok·h','$9.00','Batch/flex 50%; priority 1.8×'],
+    ['Google','Gemini 3.1 Flash-Lite','$0.25','$0.025','$1.00 / MTok·h','$1.50','Batch/flex 50%; priority 1.8×'],
+    ['Google','Gemini 2.5 Pro','$1.25 / $2.50','$0.125 / $0.25','$4.50 / MTok·h','$10 / $15','Higher tier above 200K prompt'],
+    ['Google','Gemini 2.5 Flash','$0.30','$0.03','$1.00 / MTok·h','$2.50','Batch/flex input/output 50%'],
+    ['Mistral','Mistral Medium 3.5','$1.50','—','—','$7.50','Batch generally 50% lower'],
+    ['Mistral','Mistral Small 4','$0.15','—','—','$0.60','Open-weight model; hosted tariff shown'],
+    ['Mistral','Devstral Small 2','$0.10','—','—','$0.30','Agentic coding model']
+  ];
+
+  function renderPriceTable(filter='all') {
+    $('#priceTableBody').innerHTML=priceRows.filter(r=>filter==='all'||r[0]===filter).map(r=>`<tr><td><strong>${r[1]}</strong><span class="provider-pill">${r[0]}</span></td><td>${r[2]}</td><td>${r[3]}</td><td>${r[4]}</td><td>${r[5]}</td><td><small>${r[6]}</small></td></tr>`).join('');
+  }
+
+  function renderSources() {
+    $('#sourceList').innerHTML=sources.map((s,i)=>`<div class="source-item"><a href="${s.url}" target="_blank" rel="noopener"><b>${i+1}. ${s.title}</b></a><p>${s.note}</p></div>`).join('');
+  }
+
+  function load800kExample() {
+    $('#modelSelect').value='openai-sol'; loadModelEditor();
+    $('#turns').value=80; $('#sessionHours').value=4; $('#prefixTokens').value=0; $('#userTokens').value=5000; $('#outputTokens').value=5000;
+    $('#cacheHit').value=100; $('#compactThreshold').value=200000; $('#compactSize').value=20000; $('#retrievedTokens').value=20000; $('#prewarmCache').checked=false;
+    updateSimulator();
+    $('#simulator').scrollIntoView({behavior:'smooth'});
+  }
+
+  function bindEvents() {
+    $('#themeToggle').addEventListener('click',()=>{ const html=document.documentElement; html.dataset.theme=html.dataset.theme==='dark'?'light':'dark'; safeStorage.set('iel-theme',html.dataset.theme); updateSimulator(); });
+    $$('.level-button').forEach(b=>b.addEventListener('click',()=>renderLevel(Number(b.dataset.level))));
+    ['#anatomyModel','#anatomyInput','#anatomyCache','#anatomyOutput'].forEach(id=>$(id).addEventListener('input',updateAnatomy));
+    $('#modelSelect').addEventListener('change',loadModelEditor);
+    const simulatorInputs=['#turns','#sessionHours','#prefixTokens','#userTokens','#outputTokens','#cacheHit','#compactThreshold','#compactSize','#retrievedTokens','#prewarmCache','#priceInput','#priceOutput','#priceCacheRead','#priceCacheWrite','#priceCacheStorage','#batchMultiplier','#longThreshold','#longInputMultiplier','#longOutputMultiplier'];
+    simulatorInputs.forEach(id=>$(id).addEventListener('input',updateSimulator));
+    $$('input[name="delivery"]').forEach(x=>x.addEventListener('change',updateSimulator));
+    $('#load800k').addEventListener('click',load800kExample);
+    $$('[data-advisor]').forEach(x=>x.addEventListener('change',updateAdvisor));
+    $('#pricingModelTabs').addEventListener('click',e=>{ const b=e.target.closest('[data-pricing-tab]'); if(b) renderPricingTabs(Number(b.dataset.pricingTab)); });
+    const econIds=['#econHardwareCost','#econLife','#econUtil','#econPower','#econPue','#econElectricity','#econPrefill','#econDecode
