@@ -1,0 +1,56 @@
+'Input tokens are processed together; output tokens are generated sequentially. Providers therefore publish separate rates, and output often dominates even when it is much shorter.',
+      equation:'request cost = input tokens × input rate + output tokens × output rate',
+      boxes:[['Count','What is actually billable?'],['Rate','Which tariff and service tier applies?'],['Shape','How much input versus output?']]
+    },
+    {
+      kicker:'Layer 2 · Add time and repetition', title:'A conversation repeatedly reuses its past',
+      body:'A 200K-token conversation is not necessarily a 200K-token bill. If each turn resends the growing transcript, cumulative processed input can be many times larger. Prompt caching discounts matching prefixes; compaction removes old material from later requests.',
+      equation:'session cost = Σ turn cost(context at turn t) + context-management operations',
+      boxes:[['Caching','Cheaper rereading, exact state retained.'],['Compaction','Less rereading, but lossy or opaque state.'],['Thresholds','A single long turn can reprice the whole request.']]
+    },
+    {
+      kicker:'Layer 3 · Add application architecture', title:'The model call is only one system component',
+      body:'Retrieval, tools, agent loops, retries, validators, embeddings, web searches, and human review can dominate. A smaller model that retries three times may cost more than a larger model that succeeds once.',
+      equation:'cost per successful outcome = total workflow spend ÷ accepted outcomes',
+      boxes:[['Reliability','Measure first-pass and final success.'],['Tool tax','Schemas and results become input tokens.'],['Routing','Spend capability only where it changes outcomes.']]
+    },
+    {
+      kicker:'Layer 4 · Add the serving fleet', title:'Latency promises change hardware economics',
+      body:'Providers optimize goodput: requests completed inside latency and reliability targets. More batching raises throughput, but can worsen waiting time. Cache locality, KV-memory pressure, prefill/decode interference, and bursty traffic all affect usable capacity.',
+      equation:'serving COGS ≈ accelerator-seconds + energy + network + idle capacity + operations',
+      boxes:[['Prefill','Parallel prompt processing.'],['Decode','Sequential generation and memory traffic.'],['Goodput','Throughput that still meets the SLO.']]
+    },
+    {
+      kicker:'Layer 5 · Add the company', title:'Price is strategy, not a transparent cost meter',
+      body:'List prices allocate scarce capacity, segment customers, reward asynchronous work, encourage cache-friendly architectures, and recover training, research, product, sales, and capital costs. Private providers rarely disclose model-level COGS.',
+      equation:'price = cost recovery + capacity signal + segmentation + margin + strategic subsidy',
+      boxes:[['API','Customer bears demand variance.'],['Subscription','Provider pools heavy and light users.'],['Enterprise','Commitments trade flexibility for predictability.']]
+    }
+  ];
+
+  const pricingModels = [
+    { name:'Usage-based API', intro:'Pay for metered tokens and tools. It is transparent at the request level but exposes you to workload variance.', rows:[['Idle-capacity risk','Provider'],['Demand-spike risk','Customer'],['Best fit','Variable or early-stage workloads'],['Failure mode','Optimizing token price while ignoring retries and outcome quality']] },
+    { name:'Subscription / seat', intro:'A fixed fee buys access under limits, priority policies, and product constraints. The provider pools usage across users.', rows:[['Idle-capacity risk','Provider, moderated by limits'],['Demand-spike risk','Shared through rationing'],['Best fit','Interactive individual work with uncertain volume'],['Failure mode','Treating a consumer plan as a contractually unlimited API']] },
+    { name:'Batch / flex', intro:'You surrender immediacy so the provider can schedule work into cheaper capacity and form more efficient batches.', rows:[['Idle-capacity risk','Lower for provider'],['Latency risk','Customer'],['Best fit','Evaluations, classification, embeddings, offline transforms'],['Failure mode','Using it for stateful or user-blocking work']] },
+    { name:'Provisioned throughput', intro:'Reserve capacity or commit spend for predictable latency and volume. You pay for availability, not only consumption.', rows:[['Idle-capacity risk','Customer'],['Demand-spike risk','Lower within reservation'],['Best fit','Steady production demand and strict SLOs'],['Failure mode','Low utilization erases negotiated token savings']] },
+    { name:'Credits / prepaid', intro:'Prepaid balances improve provider cash flow and can simplify budgets, but may expire or obscure unit economics.', rows:[['Cash-flow risk','Customer prepays'],['Price-change risk','Depends on credit terms'],['Best fit','Controlled budgets and committed usage'],['Failure mode','Unused balances and weak cost attribution']] },
+    { name:'Self-hosted open weights', intro:'You purchase or rent infrastructure and own serving operations. Marginal cost can fall at scale, but fixed and organizational costs appear.', rows:[['Idle-capacity risk','Customer'],['Operations risk','Customer'],['Best fit','Predictable volume, data locality, or deep customization'],['Failure mode','Comparing API price only to GPU rent while omitting people, reliability, and utilization']] }
+  ];
+
+  const strategyDefs = {
+    cache: { title:'Prompt caching', works:'Avoids recomputing exact repeated prefixes and often improves time-to-first-token.', caveat:'Weak when prefixes mutate, cache TTLs expire, routing scatters requests, or traffic is too sparse.' },
+    compact: { title:'Milestone compaction', works:'Stops settled history from being reread on every later turn.', caveat:'Can erase exact details; do not compact merely because a threshold exists.' },
+    rag: { title:'Retrieval working set', works:'Pays for relevant evidence rather than the entire archive on every request.', caveat:'Retrieval misses, chunking errors, and ranking can reduce fidelity.' },
+    batch: { title:'Batch / flex processing', works:'Trades latency for higher utilization and commonly a 50% tariff reduction.', caveat:'Wrong for user-blocking, sequential, or tightly stateful work.' },
+    route: { title:'Model routing', works:'Uses cheap models for easy steps and escalates only when capability changes outcome quality.', caveat:'Routing errors, duplicated context, and retries can overwhelm savings.' },
+    output: { title:'Output discipline', works:'Output is often the most expensive token class; concise structured answers cut both cost and latency.', caveat:'Over-constraining can reduce reasoning quality or omit needed evidence.' },
+    selfhost: { title:'Self-hosting', works:'At sustained volume, high utilization can amortize fixed hardware and remove vendor margins.', caveat:'Requires serving expertise, capacity planning, upgrades, and measured quality parity.' },
+    provision: { title:'Provisioned capacity', works:'Predictable demand can justify commitments that stabilize price and latency.', caveat:'Unused capacity is paid capacity; burst shapes still matter.' }
+  };
+
+  function populateSelects() {
+    const options = Object.entries(models).map(([id,m]) => `<option value="${id}">${esc(m.provider)} · ${esc(m.name)}</option>`).join('');
+    $('#modelSelect').innerHTML = options;
+    $('#anatomyModel').innerHTML = options;
+    $('#modelSelect').value = 'openai-terra';
+    $('#anatomyMode
